@@ -3,9 +3,14 @@ from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 from PPIDSG.models import Generator
 import numpy as np
+import argparse
 
+#get dataset name from command line
+parser.add_argument('--dataset', required=False, default='mnist', help='input dataset: mnist, cifar, svhn, fmnist')
+
+datas = parser.parse_args().dataset
 # hyperparameter setting
-datas = 'FMNIST' # mnist, fmnist, cifar10, svhn
+# datas = 'FMNIST' # mnist, fmnist, cifar10, svhn
 dummys = 'test' # dummy data: the random input, test:the image from test dataset
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 to_pil_image = transforms.ToPILImage()
