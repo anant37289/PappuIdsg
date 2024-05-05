@@ -78,5 +78,4 @@ if __name__ == '__main__':
         # test accuracy
         test_acc = test_inference(G, global_model, C, test_dataset)
         print("|---- Test Accuracy: {:.2f}%".format(100 * test_acc))
-
     print('\n Total Run Time: {0:0.4f}'.format(time.time() - start_time))
