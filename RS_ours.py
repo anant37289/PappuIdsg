@@ -56,17 +56,17 @@ apply_transform_mnist = transforms.Compose([
             ])
 
 if datas == 'SVHN':
-    train_dataset = datasets.SVHN(root='./data/svhn/', split='train', download=False, transform=apply_transform_svhn)
-    test_dataset = datasets.SVHN(root='./data/svhn/', split='test', download=False, transform=apply_transform_svhn)
+    train_dataset = datasets.SVHN(root='./data/svhn/', split='train', download=True, transform=apply_transform_svhn)
+    test_dataset = datasets.SVHN(root='./data/svhn/', split='test', download=True, transform=apply_transform_svhn)
 elif datas == 'CIFAR10':
-    train_dataset = datasets.CIFAR10(root='./data/cifar/', train=True, transform=apply_transform_cifar)
-    test_dataset = datasets.CIFAR10(root='./data/cifar/', train=False, transform=apply_transform_cifar)
+    train_dataset = datasets.CIFAR10(root='./data/cifar/', train=True,download=True ,transform=apply_transform_cifar)
+    test_dataset = datasets.CIFAR10(root='./data/cifar/', train=False,download=True ,transform=apply_transform_cifar)
 elif datas == 'MNIST':
-    train_dataset = datasets.MNIST(root='./data/', train=True, transform=apply_transform_mnist)
-    test_dataset = datasets.MNIST(root='./data/', train=False, transform=apply_transform_mnist)
+    train_dataset = datasets.MNIST(root='./data/', train=True,download=True ,transform=apply_transform_mnist)
+    test_dataset = datasets.MNIST(root='./data/', train=False,download=True ,transform=apply_transform_mnist)
 elif datas == 'FMNIST':
-    train_dataset = datasets.FashionMNIST(root='./data/fmnist/', train=True, transform=apply_transform_mnist)
-    test_dataset = datasets.FashionMNIST(root='./data/fmnist/', train=False, transform=apply_transform_mnist)
+    train_dataset = datasets.FashionMNIST(root='./data/fmnist/', train=True,download=True ,transform=apply_transform_mnist)
+    test_dataset = datasets.FashionMNIST(root='./data/fmnist/', train=False,download=True ,transform=apply_transform_mnist)
 
 train_loader = DataLoader(dataset=train_dataset, batch_size=64, shuffle=False)
 test_loader = DataLoader(dataset=test_dataset, batch_size=64, shuffle=False)
