@@ -72,46 +72,25 @@ elif datas == 'FMNIST':
 train_loader = DataLoader(dataset=train_dataset, batch_size=64, shuffle=False)
 test_loader = DataLoader(dataset=test_dataset, batch_size=64, shuffle=False)
 
-# image
-test_loader_X = next(iter(test_loader))[0].clone().detach()
-test_loader_X = test_loader_X.to(device)
+psnrl = []
+for i, (images, labels) in enumerate(test_loader):
+    # print(i)
+    if datas == 'MNIST' or datas == 'FMNIST':
+        test_loader_X = images.view(images.size(0), 1, 28, 28)
+    elif datas == 'CIFAR10' or datas == 'SVHN':
+        test_loader_X = images.view(images.size(0), 3, 32, 32)
 
-# label
-if datas == 'MNIST' or datas == 'FMNIST':
-    test_loader_Y = test_loader_X[1].view(1, 1, 28, 28)
-elif datas == 'CIFAR10':
-    test_loader_Y = test_loader_X[1].view(1, 3, 32, 32)
-elif datas == 'SVHN':
-    test_loader_Y = test_loader_X[17].view(1, 3, 32, 32)
+    _, pred_output = target_model(test_loader_X.to(device))
+    img = pred_output.to(device)
+    orig = (test_loader_X.to(device)+1)/2*255
+    img = (img+1)/2*255
+    delta = (orig-img)
+    delta = delta.reshape(delta.shape[0],-1)
+    mse = torch.mean(delta**2,dim=1)
+    max_pixel = 255
+    psnr = 20*torch.log(max_pixel/torch.sqrt(mse))/(torch.log(torch.tensor(10)))
+    psnr = torch.sum(psnr)/len(test_loader_X) 
+    psnrl.append(psnr.item())
+    del pred_output,img,orig,psnr,delta
 
-img = to_pil_image(test_loader_Y[0].cpu())
-# img.show()
-
-# get the input of generator
-if dummys == 'dummy_data':
-    dummy_data = torch.randn(test_loader_Y.size()).to(device)
-    img = to_pil_image(dummy_data[0].cpu())
-    img.save('./picture/fmnist.jpg')
-else:
-    dummy_data = test_loader_X
-    orig = dummy_data[0].cpu()
-    orig_pil = to_pil_image(orig)
-    orig_pil.save('./picture/fmnist.jpg')
-
-# RS
-_, pred_output = target_model(dummy_data)
-# print(_.shape,pred_output.shape)
-# show reconstructed image
-img = pred_output[0].cpu()
-img_pil = to_pil_image(img)
-# img.show()
-img_pil.save('./picture/dummy_fmnist.jpg')
-
-orig = (orig+1)/2*255
-img = (img+1)/2*255
-mse = torch.mean((orig-img)**2)
-
-max_pixel = 255
-print(max_pixel)
-psnr = 20*torch.log(max_pixel/torch.sqrt(mse))/torch.log(torch.tensor(10))
-print(psnr)
+print(sum(psnrl)/len(psnrl))
