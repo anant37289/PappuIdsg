@@ -29,6 +29,7 @@ def args_parser():
     parser.add_argument('--beta1', type=float, default=0.5, help='beta1 for Adam optimizer')
     parser.add_argument('--beta2', type=float, default=0.999, help='beta2 for Adam optimizer')
     parser.add_argument('--n_validation', type=int, default=1000, help="number of validation samples")
+    parser.add_argument('--alpha', type=float, default=0.5, help='alpha for mutation')
 
     args = parser.parse_args()
     return args

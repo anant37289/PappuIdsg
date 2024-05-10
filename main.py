@@ -82,10 +82,10 @@ if __name__ == '__main__':
             local_Gwt = local_G.state_dict()
             if args.num_users%2==1 and idx!=0:
               for layer,key in enumerate(local_Gwt.keys()):
-                local_Gwt[key] = local_Gwt[key] + 0.1*Lv[layer,idx]*g_glb[key]
+                local_Gwt[key] = local_Gwt[key] + args.alpha*Lv[layer,idx]*g_glb[key]
             elif args.num_users%2==0:
               for layer,key in enumerate(local_Gwt.keys()):
-                local_Gwt[key] = local_Gwt[key] + 0.1*Lv[layer,idx]*g_glb[key]
+                local_Gwt[key] = local_Gwt[key] + args.alpha*Lv[layer,idx]*g_glb[key]
             local_G.load_state_dict(local_Gwt)
             local_model = LocalUpdate(args=args, dataset=train_dataset, G=local_G,
                                       D_B=copy.deepcopy(D_B), idxs=user_groups[idx])
