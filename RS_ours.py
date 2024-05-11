@@ -5,7 +5,7 @@ from PPIDSG.models import Generator
 import numpy as np
 import argparse
 
-#get dataset name from command line
+# get dataset name from command line
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', required=False, default='mnist', help='input dataset: mnist, cifar, svhn, fmnist')
 
