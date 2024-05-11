@@ -6,6 +6,7 @@ import copy
 import torch
 import time
 import os
+import random
 
 from tqdm import tqdm
 from PPIDSG.options import args_parser
@@ -303,17 +304,40 @@ if __name__ == '__main__':
     D_B_local_weights = [D_B_weights for i in range(args.num_users)]
     C_local_weights = [C_weights for i in range(args.num_users)]
 
+    g_glb = copy.deepcopy(G_weights)
+    for key in g_glb.keys():
+      g_glb[key] = 0
+
     for epoch in tqdm(range(args.num_epochs)):
         G_local_weights = []
         sum_weights1, sum_weights2, sum_weights3 = [], [], []
         print(f'\n | Global Training Round : {epoch + 1} |\n')
+
+        # make mask
+        L = len(G_weights)
+        K = (args.num_users//2)*2
+        index = list(range(0,K))
+        Lv = torch.ones((L,K))
+        for i in range(len(Lv)):
+          sample_idx = random.sample(index,K//2)
+          Lv[i,sample_idx] = -1
 
         for idx in range(args.num_users):
             global_model.load_state_dict(global_model_local_weights[idx])
             D_B.load_state_dict(D_B_local_weights[idx])
             C.load_state_dict(C_local_weights[idx])
 
-            local_model = LocalUpdate(args=args, dataset=train_dataset, G=copy.deepcopy(G),
+            # G <= local_G[mutated]
+            local_G = copy.deepcopy(G)
+            local_Gwt = local_G.state_dict()
+            if args.num_users%2==1 and idx!=0:
+              for layer,key in enumerate(local_Gwt.keys()):
+                local_Gwt[key] = local_Gwt[key] + args.alpha*Lv[layer,idx - 1]*g_glb[key]
+            elif args.num_users%2==0:
+              for layer,key in enumerate(local_Gwt.keys()):
+                local_Gwt[key] = local_Gwt[key] + args.alpha*Lv[layer,idx]*g_glb[key]
+            local_G.load_state_dict(local_Gwt)
+            local_model = LocalUpdate(args=args, dataset=train_dataset, G=local_G,
                                       D_B=copy.deepcopy(D_B), idxs=user_groups[idx])
             w, v, u, z = local_model.update_weights(D_A_model=copy.deepcopy(global_model),
                                                     C=copy.deepcopy(C), global_round=epoch)
@@ -332,7 +356,10 @@ if __name__ == '__main__':
                     sum_weights3.append(copy.deepcopy(z)) # client classifier
                     
         # update global weights and local weights
+        G_weights_old = copy.deepcopy(G_weights)
         G_weights = average_weights(G_local_weights)
+        for key in G_weights.keys():
+          g_glb[key] = G_weights[key] - G_weights_old[key]
         G.load_state_dict(G_weights)
 
         if epoch > 48:
