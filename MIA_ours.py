@@ -303,17 +303,17 @@ if __name__ == '__main__':
     global_model_local_weights = [global_weights for i in range(args.num_users)]
     D_B_local_weights = [D_B_weights for i in range(args.num_users)]
     C_local_weights = [C_weights for i in range(args.num_users)]
-
     g_glb = copy.deepcopy(G_weights)
     for key in g_glb.keys():
       g_glb[key] = 0
-
+    best_test_acc=0
+    best_sum_weights1, best_sum_weights2, best_sum_weights3 = [], [], []
     for epoch in tqdm(range(args.num_epochs)):
         G_local_weights = []
         sum_weights1, sum_weights2, sum_weights3 = [], [], []
         print(f'\n | Global Training Round : {epoch + 1} |\n')
 
-        # make mask
+        #make mask
         L = len(G_weights)
         K = (args.num_users//2)*2
         index = list(range(0,K))
@@ -326,13 +326,11 @@ if __name__ == '__main__':
             global_model.load_state_dict(global_model_local_weights[idx])
             D_B.load_state_dict(D_B_local_weights[idx])
             C.load_state_dict(C_local_weights[idx])
-
-            # G <= local_G[mutated]
             local_G = copy.deepcopy(G)
             local_Gwt = local_G.state_dict()
             if args.num_users%2==1 and idx!=0:
               for layer,key in enumerate(local_Gwt.keys()):
-                local_Gwt[key] = local_Gwt[key] + args.alpha*Lv[layer,idx - 1]*g_glb[key]
+                local_Gwt[key] = local_Gwt[key] + args.alpha*Lv[layer,idx-1]*g_glb[key]
             elif args.num_users%2==0:
               for layer,key in enumerate(local_Gwt.keys()):
                 local_Gwt[key] = local_Gwt[key] + args.alpha*Lv[layer,idx]*g_glb[key]
@@ -345,34 +343,36 @@ if __name__ == '__main__':
             D_B_local_weights[idx] = copy.deepcopy(u)
             global_model_local_weights[idx] = copy.deepcopy(w)
 
-            if epoch > 48:
-               
-                torch.save(v, model_dir + str(idx) + '_generator_param.pkl') # victim generator
-                torch.save(w, model_dir + str(idx) + '_extractor_param.pkl') # victim feature extractor
-                torch.save(z, model_dir + str(idx) + '_classifier_param.pkl') # victim classifier
-                if idx != 0:
-                    sum_weights1.append(copy.deepcopy(v)) # client generator
-                    sum_weights2.append(copy.deepcopy(w)) # client feature extractor
-                    sum_weights3.append(copy.deepcopy(z)) # client classifier
+            sum_weights1.append(copy.deepcopy(v)) # client generator
+            sum_weights2.append(copy.deepcopy(w)) # client feature extractor
+            sum_weights3.append(copy.deepcopy(z)) # client classifier
                     
         # update global weights and local weights
         G_weights_old = copy.deepcopy(G_weights)
-        G_weights = average_weights(G_local_weights)
+        G_weights = average_weights(G_local_weights) # federated train
         for key in G_weights.keys():
           g_glb[key] = G_weights[key] - G_weights_old[key]
-        G.load_state_dict(G_weights)
+        G.load_state_dict(G_weights) # each client generator
 
-        if epoch > 48:
-            print("here2")
-            torch.save(G_weights, model_dir + 'generator_param.pkl')
-
+        
+            
         test_acc = test_inference(G, global_model, C, test_dataset) # test accuracy
-        print("|---- Test Accuracy: {:.2f}%".format(100 * test_acc))
+        if test_acc > best_test_acc:
+            print("|---- Test Accuracy: {:.2f}%".format(100 * test_acc))
+            torch.save(G_weights, model_dir + 'generator_param.pkl')
+            for i in range(len(sum_weights1)):
+                torch.save(sum_weights1[i], model_dir + str(i) + '_generator_param.pkl') # victim generator
+                torch.save(sum_weights2[i], model_dir + str(i) + '_extractor_param.pkl') # victim feature extractor
+                torch.save(sum_weights3[i], model_dir + str(i) + '_classifier_param.pkl') # victim classifier   
+                best_sum_weights1 = sum_weights1
+                best_sum_weights2 = sum_weights2
+                best_sum_weights3 = sum_weights3
+                best_test_acc = test_acc
 
-    weights = average_weights(sum_weights1) # others generator (all situation)
+    weights = average_weights(best_sum_weights1) # others generator (all situation)
     torch.save(weights, model_dir + 'others_generator_param.pkl')
 
-    weights = average_weights(sum_weights2) # others feature extractor (all situation)
+    weights = average_weights(best_sum_weights2) # others feature extractor (all situation)
     torch.save(weights, model_dir + 'others_extractor_param.pkl')
 
     others = []
