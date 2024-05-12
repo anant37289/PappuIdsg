@@ -391,7 +391,7 @@ if __name__ == "__main__":
         g_glb[key] = 0
     for key in g_glb_prime.keys():
         g_glb_prime[key] = 0
-    
+
     # Global Weight Constants
     w_glb_prime = copy.deepcopy(G_weights)
     w_glb_double_prime = copy.deepcopy(G_weights)
@@ -410,10 +410,10 @@ if __name__ == "__main__":
         for i in range(len(Lv)):
             index = list(range(0, K))
             sample_idx = random.sample(index, K // 4)
-            Lv[i, sample_idx] = 2
+            Lv[i, sample_idx] = 0.5
             index = [idx for idx in index if idx not in sample_idx]
             sample_idx = random.sample(index, K // 4)
-            Lv[i, sample_idx] = -2
+            Lv[i, sample_idx] = -0.5
             index = [idx for idx in index if idx not in sample_idx]
             sample_idx = random.sample(index, K // 4)
             Lv[i, sample_idx] = -1
@@ -426,14 +426,27 @@ if __name__ == "__main__":
             local_Gwt = local_G.state_dict()
             if args.num_users % 2 == 1 and idx != 0:
                 for layer, key in enumerate(local_Gwt.keys()):
-                    local_Gwt[key] = (
-                        local_Gwt[key] + args.alpha * Lv[layer, idx - 1] * g_glb[key]
-                    )
+                    if Lv[layer, idx - 1] == 0.5 or Lv[layer, idx - 1] == -0.5:
+                        local_Gwt[key] = (
+                            local_Gwt[key]
+                            + args.alpha * Lv[layer, idx - 1] * g_glb_prime[key]
+                        )
+                    else:
+                        local_Gwt[key] = (
+                            local_Gwt[key]
+                            + args.alpha * Lv[layer, idx - 1] * g_glb[key]
+                        )
             elif args.num_users % 2 == 0:
                 for layer, key in enumerate(local_Gwt.keys()):
-                    local_Gwt[key] = (
-                        local_Gwt[key] + args.alpha * Lv[layer, idx] * g_glb[key]
-                    )
+                    if Lv[layer, idx] == 0.5 or Lv[layer, idx] == -0.5:
+                        local_Gwt[key] = (
+                            local_Gwt[key]
+                            + args.alpha * Lv[layer, idx] * g_glb_prime[key]
+                        )
+                    else:
+                        local_Gwt[key] = (
+                            local_Gwt[key] + args.alpha * Lv[layer, idx] * g_glb[key]
+                        )
             local_G.load_state_dict(local_Gwt)
             local_model = LocalUpdate(
                 args=args,
