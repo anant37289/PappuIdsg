@@ -46,7 +46,7 @@ def dataset_iid(dataset, num_users):
     :return: dict of image index
     """
     np.random.seed(1234)
-    num_items = int(len(dataset)/num_users)
+    num_items = int(len(dataset) / num_users)
     dict_users, all_idxs = {}, [i for i in range(len(dataset))]
     for i in range(num_users):
         dict_users[i] = set(np.random.choice(all_idxs, num_items, replace=False))
@@ -73,52 +73,73 @@ def dataset_split(train_dataset, num_users):
 
 
 def get_dataset(args):
-    if args.dataset == 'cifar':
-        data_dir = './data/cifar/'
+    if args.dataset == "cifar":
+        data_dir = "./data/cifar/"
 
-        apply_transform = transforms.Compose([
-            transforms.RandomHorizontalFlip(p=0.5),
-            transforms.RandomRotation(15),
-            transforms.ToTensor(),
-            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
-        ])
+        apply_transform = transforms.Compose(
+            [
+                transforms.RandomHorizontalFlip(p=0.5),
+                transforms.RandomRotation(15),
+                transforms.ToTensor(),
+                transforms.Normalize(
+                    (0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)
+                ),
+            ]
+        )
 
-        train_dataset = datasets.CIFAR10(data_dir, train=True, download=True, transform=apply_transform)
-        test_dataset = datasets.CIFAR10(data_dir, train=False, download=True, transform=apply_transform)
-
-        # sample training data amongst users
-        user_groups = dataset_iid(train_dataset, args.num_users)
-
-    elif args.dataset == 'svhn':
-        data_dir = './data/svhn/'
-
-        apply_transform = transforms.Compose([
-            transforms.RandomHorizontalFlip(p=0.5),
-            transforms.RandomRotation(15),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
-        ])
-
-        train_dataset = datasets.SVHN(data_dir, split='train', download=True, transform=apply_transform)
-        test_dataset = datasets.SVHN(data_dir, split='test', download=True, transform=apply_transform)
+        train_dataset = datasets.CIFAR10(
+            data_dir, train=True, download=True, transform=apply_transform
+        )
+        test_dataset = datasets.CIFAR10(
+            data_dir, train=False, download=True, transform=apply_transform
+        )
 
         # sample training data amongst users
         user_groups = dataset_iid(train_dataset, args.num_users)
 
-    elif args.dataset == 'mnist' or args.dataset == 'fmnist':
-        apply_transform = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize(mean=(0.5,), std=(0.5,))
-        ])
+    elif args.dataset == "svhn":
+        data_dir = "./data/svhn/"
 
-        if args.dataset == 'mnist':
-            data_dir = './data/'
-            train_dataset = datasets.MNIST(data_dir, train=True, download=True, transform=apply_transform)
-            test_dataset = datasets.MNIST(data_dir, train=False, download=True, transform=apply_transform)
+        apply_transform = transforms.Compose(
+            [
+                transforms.RandomHorizontalFlip(p=0.5),
+                transforms.RandomRotation(15),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)),
+            ]
+        )
+
+        train_dataset = datasets.SVHN(
+            data_dir, split="train", download=True, transform=apply_transform
+        )
+        test_dataset = datasets.SVHN(
+            data_dir, split="test", download=True, transform=apply_transform
+        )
+
+        # sample training data amongst users
+        user_groups = dataset_iid(train_dataset, args.num_users)
+
+    elif args.dataset == "mnist" or args.dataset == "fmnist":
+        apply_transform = transforms.Compose(
+            [transforms.ToTensor(), transforms.Normalize(mean=(0.5,), std=(0.5,))]
+        )
+
+        if args.dataset == "mnist":
+            data_dir = "./data/"
+            train_dataset = datasets.MNIST(
+                data_dir, train=True, download=True, transform=apply_transform
+            )
+            test_dataset = datasets.MNIST(
+                data_dir, train=False, download=True, transform=apply_transform
+            )
         else:
-            data_dir = './data/fmnist/'
-            train_dataset = datasets.FashionMNIST(data_dir, train=True, download=True, transform=apply_transform)
-            test_dataset = datasets.FashionMNIST(data_dir, train=False, download=True, transform=apply_transform)
+            data_dir = "./data/fmnist/"
+            train_dataset = datasets.FashionMNIST(
+                data_dir, train=True, download=True, transform=apply_transform
+            )
+            test_dataset = datasets.FashionMNIST(
+                data_dir, train=False, download=True, transform=apply_transform
+            )
 
         # sample training data amongst users
         user_groups = dataset_iid(train_dataset, args.num_users)
@@ -129,7 +150,7 @@ def average_weights(w):
     """
     Returns the average of the weights.
     """
-    
+
     w_avg = copy.deepcopy(w[0])
     for key in w_avg.keys():
         for i in range(1, len(w)):
@@ -144,17 +165,19 @@ def average_weights_new(w, p):
     """
     w_avg = copy.deepcopy(w[0])
     for key in w_avg.keys():
-        w_avg[key] = torch.mul(w[1][key], (1/p)) + torch.mul(w_avg[key], (1-(1/p)))
+        w_avg[key] = torch.mul(w[1][key], (1 / p)) + torch.mul(
+            w_avg[key], (1 - (1 / p))
+        )
     return w_avg
 
 
 def exp_details(args):
-    print('\nExperimental details:')
+    print("\nExperimental details:")
     return
 
 
 # load historical images
-class ImagePool():
+class ImagePool:
     def __init__(self, pool_size):
         self.pool_size = pool_size
         if self.pool_size > 0:
@@ -174,7 +197,7 @@ class ImagePool():
             else:
                 p = random.uniform(0, 1)
                 if p > 0.5:
-                    random_id = random.randint(0, self.pool_size-1)
+                    random_id = random.randint(0, self.pool_size - 1)
                     tmp = self.images[random_id].clone()
                     self.images[random_id] = image
                     return_images.append(tmp)
