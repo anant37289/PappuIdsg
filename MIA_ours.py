@@ -308,19 +308,13 @@ if __name__ == '__main__':
       g_glb[key] = 0
     best_test_acc=0
     best_sum_weights1, best_sum_weights2, best_sum_weights3 = [], [], []
+    # for layer,key in enumerate(G_weights.keys()):
+    #   print(key,G_weights[key].shape)
+    # exit(0)
     for epoch in tqdm(range(args.num_epochs)):
         G_local_weights = []
         sum_weights1, sum_weights2, sum_weights3 = [], [], []
         print(f'\n | Global Training Round : {epoch + 1} |\n')
-
-        #make mask
-        L = len(G_weights)
-        K = (args.num_users//2)*2
-        index = list(range(0,K))
-        Lv = torch.ones((L,K))
-        for i in range(len(Lv)):
-          sample_idx = random.sample(index,K//2)
-          Lv[i,sample_idx] = -1
 
         for idx in range(args.num_users):
             global_model.load_state_dict(global_model_local_weights[idx])
@@ -328,12 +322,14 @@ if __name__ == '__main__':
             C.load_state_dict(C_local_weights[idx])
             local_G = copy.deepcopy(G)
             local_Gwt = local_G.state_dict()
-            if args.num_users%2==1 and idx!=0:
-              for layer,key in enumerate(local_Gwt.keys()):
-                local_Gwt[key] = local_Gwt[key] + args.alpha*Lv[layer,idx-1]*g_glb[key]
-            elif args.num_users%2==0:
-              for layer,key in enumerate(local_Gwt.keys()):
-                local_Gwt[key] = local_Gwt[key] + args.alpha*Lv[layer,idx]*g_glb[key]
+            for layer,key in enumerate(local_Gwt.keys()):
+                mask = torch.ones(local_Gwt[key].shape[0]).to(device)
+                # print(mask.shape)
+                mask[torch.randperm(mask.size(0)//2)]=-1
+                if "bias" in key:
+                  local_Gwt[key] = local_Gwt[key] + args.alpha*mask*g_glb[key]
+                if "weight" in key:
+                  local_Gwt[key] = local_Gwt[key] + args.alpha*mask[:,None,None,None]*g_glb[key]
             local_G.load_state_dict(local_Gwt)
             local_model = LocalUpdate(args=args, dataset=train_dataset, G=local_G,
                                       D_B=copy.deepcopy(D_B), idxs=user_groups[idx])
