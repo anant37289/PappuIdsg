@@ -424,28 +424,28 @@ if __name__ == "__main__":
             C.load_state_dict(C_local_weights[idx])
             local_G = copy.deepcopy(G)
             local_Gwt = local_G.state_dict()
-            if args.num_users % 2 == 1 and idx != 0:
+            if ((args.num_users % 4)%2) == 1 and idx != 0:
                 for layer, key in enumerate(local_Gwt.keys()):
-                    if Lv[layer, idx - 1] == 0.5 or Lv[layer, idx - 1] == -0.5:
+                    if Lv[layer, idx - args.num_users % 4] == 0.5 or Lv[layer, idx - args.num_users % 4] == -0.5:
                         local_Gwt[key] = (
                             local_Gwt[key]
-                            + args.alpha * Lv[layer, idx - 1] * g_glb_prime[key]
+                            + args.alpha * Lv[layer, idx - args.num_users % 4] * g_glb_prime[key]
                         )
                     else:
                         local_Gwt[key] = (
                             local_Gwt[key]
-                            + args.alpha * Lv[layer, idx - 1] * g_glb[key]
+                            + args.alpha * Lv[layer, idx - args.num_users % 4] * g_glb[key]
                         )
-            elif args.num_users % 2 == 0:
+            elif ((args.num_users % 4) % 2) == 0:
                 for layer, key in enumerate(local_Gwt.keys()):
-                    if Lv[layer, idx] == 0.5 or Lv[layer, idx] == -0.5:
+                    if Lv[layer, idx - args.num_users % 4] == 0.5 or Lv[layer, idx - args.num_users % 4] == -0.5:
                         local_Gwt[key] = (
                             local_Gwt[key]
-                            + args.alpha * Lv[layer, idx] * g_glb_prime[key]
+                            + args.alpha * Lv[layer, idx - args.num_users % 4] * g_glb_prime[key]
                         )
                     else:
                         local_Gwt[key] = (
-                            local_Gwt[key] + args.alpha * Lv[layer, idx] * g_glb[key]
+                            local_Gwt[key] + args.alpha * Lv[layer, idx - args.num_users % 4] * g_glb[key]
                         )
             local_G.load_state_dict(local_Gwt)
             local_model = LocalUpdate(
