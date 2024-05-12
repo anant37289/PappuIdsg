@@ -68,15 +68,8 @@ if __name__ == "__main__":
 
     # federated learning
     g_glb = copy.deepcopy(G_weights)
-    g_glb_prime = copy.deepcopy(G_weights)
     for key in g_glb.keys():
         g_glb[key] = 0
-    for key in g_glb_prime.keys():
-        g_glb_prime[key] = 0
-    
-    # Global Weight Constants
-    w_glb_prime = copy.deepcopy(G_weights)
-    w_glb_double_prime = copy.deepcopy(G_weights)
 
     for epoch in tqdm(range(args.num_epochs)):
 
@@ -85,18 +78,11 @@ if __name__ == "__main__":
 
         # make mask
         L = len(G_weights)
-        K = (args.num_users // 4) * 4
+        K = (args.num_users // 2) * 2
+        index = list(range(0, K))
         Lv = torch.ones((L, K))
-
         for i in range(len(Lv)):
-            index = list(range(0, K))
-            sample_idx = random.sample(index, K // 4)
-            Lv[i, sample_idx] = 2
-            index = [idx for idx in index if idx not in sample_idx]
-            sample_idx = random.sample(index, K // 4)
-            Lv[i, sample_idx] = -2
-            index = [idx for idx in index if idx not in sample_idx]
-            sample_idx = random.sample(index, K // 4)
+            sample_idx = random.sample(index, K // 2)
             Lv[i, sample_idx] = -1
 
         for idx in range(args.num_users):
@@ -133,13 +119,10 @@ if __name__ == "__main__":
             D_B_local_weights[idx] = copy.deepcopy(u)  # discriminator
             global_model_local_weights[idx] = copy.deepcopy(w)  # feature extractor
 
-        w_glb_double_prime = copy.deepcopy(w_glb_prime)
         w_glb_prime = copy.deepcopy(G_weights)
         G_weights = average_weights(G_local_weights)  # federated train
         for key in G_weights.keys():
             g_glb[key] = G_weights[key] - w_glb_prime[key]
-        for key in G_weights.keys():
-            g_glb_prime[key] = G_weights[key] - w_glb_double_prime[key]
         G.load_state_dict(G_weights)  # each client generator
 
         # test accuracy
