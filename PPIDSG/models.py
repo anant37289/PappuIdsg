@@ -5,7 +5,16 @@ args = args_parser()
 
 
 class ConvBlock(nn.Module):
-    def __init__(self, input_size, output_size, kernel_size=3, stride=2, padding=1, activation='relu', batch_norm=True):
+    def __init__(
+        self,
+        input_size,
+        output_size,
+        kernel_size=3,
+        stride=2,
+        padding=1,
+        activation="relu",
+        batch_norm=True,
+    ):
         super(ConvBlock, self).__init__()
         self.conv = nn.Conv2d(input_size, output_size, kernel_size, stride, padding)
         self.batch_norm = batch_norm
@@ -21,20 +30,32 @@ class ConvBlock(nn.Module):
         else:
             out = self.conv(x)
 
-        if self.activation == 'relu':
+        if self.activation == "relu":
             return self.relu(out)
-        elif self.activation == 'lrelu':
+        elif self.activation == "lrelu":
             return self.lrelu(out)
-        elif self.activation == 'tanh':
+        elif self.activation == "tanh":
             return self.tanh(out)
-        elif self.activation == 'no_act':
+        elif self.activation == "no_act":
             return out
 
 
 class DeconvBlock(nn.Module):
-    def __init__(self, input_size, output_size, kernel_size=3, stride=2, padding=1, output_padding=1, activation='relu', batch_norm=True):
+    def __init__(
+        self,
+        input_size,
+        output_size,
+        kernel_size=3,
+        stride=2,
+        padding=1,
+        output_padding=1,
+        activation="relu",
+        batch_norm=True,
+    ):
         super(DeconvBlock, self).__init__()
-        self.deconv = nn.ConvTranspose2d(input_size, output_size, kernel_size, stride, padding, output_padding)
+        self.deconv = nn.ConvTranspose2d(
+            input_size, output_size, kernel_size, stride, padding, output_padding
+        )
         self.batch_norm = batch_norm
         self.bn = nn.InstanceNorm2d(output_size)
         self.activation = activation
@@ -48,13 +69,13 @@ class DeconvBlock(nn.Module):
         else:
             out = self.deconv(x)
 
-        if self.activation == 'relu':
+        if self.activation == "relu":
             return self.relu(out)
-        elif self.activation == 'lrelu':
+        elif self.activation == "lrelu":
             return self.lrelu(out)
-        elif self.activation == 'tanh':
+        elif self.activation == "tanh":
             return self.tanh(out)
-        elif self.activation == 'no_act':
+        elif self.activation == "no_act":
             return out
 
 
@@ -67,15 +88,7 @@ class ResnetBlock(nn.Module):
         relu = nn.ReLU(True)
         pad = nn.ReflectionPad2d(1)
 
-        self.resnet_block = nn.Sequential(
-            pad,
-            conv1,
-            bn,
-            relu,
-            pad,
-            conv2,
-            bn
-        )
+        self.resnet_block = nn.Sequential(pad, conv1, bn, relu, pad, conv2, bn)
 
     def forward(self, x):
         out = self.resnet_block(x)
@@ -126,10 +139,40 @@ class Discriminator(nn.Module):
     def __init__(self, input_dim, num_filter, output_dim):
         super(Discriminator, self).__init__()
 
-        conv1 = ConvBlock(input_dim, num_filter, kernel_size=4, stride=2, padding=1, activation='lrelu', batch_norm=False)
-        conv2 = ConvBlock(num_filter, num_filter * 2, kernel_size=4, stride=2, padding=1, activation='lrelu')
-        conv3 = ConvBlock(num_filter * 2, num_filter * 4, kernel_size=4, stride=1, padding=1, activation='lrelu')
-        conv4 = ConvBlock(num_filter * 4, output_dim, kernel_size=4, stride=1, padding=1, activation='no_act', batch_norm=False)
+        conv1 = ConvBlock(
+            input_dim,
+            num_filter,
+            kernel_size=4,
+            stride=2,
+            padding=1,
+            activation="lrelu",
+            batch_norm=False,
+        )
+        conv2 = ConvBlock(
+            num_filter,
+            num_filter * 2,
+            kernel_size=4,
+            stride=2,
+            padding=1,
+            activation="lrelu",
+        )
+        conv3 = ConvBlock(
+            num_filter * 2,
+            num_filter * 4,
+            kernel_size=4,
+            stride=1,
+            padding=1,
+            activation="lrelu",
+        )
+        conv4 = ConvBlock(
+            num_filter * 4,
+            output_dim,
+            kernel_size=4,
+            stride=1,
+            padding=1,
+            activation="no_act",
+            batch_norm=False,
+        )
 
         self.conv_blocks = nn.Sequential(
             conv1,
@@ -155,7 +198,9 @@ class Generator(nn.Module):
         # Reflection padding
         self.pad = nn.ReflectionPad2d(3)
         # Encoder
-        self.conv1 = ConvBlock(input_dim, num_filter, kernel_size=7, stride=1, padding=0)
+        self.conv1 = ConvBlock(
+            input_dim, num_filter, kernel_size=7, stride=1, padding=0
+        )
         self.conv2 = ConvBlock(num_filter, num_filter * 2)
         self.conv3 = ConvBlock(num_filter * 2, num_filter * 4)
         # Resnet blocks
@@ -166,7 +211,15 @@ class Generator(nn.Module):
         # Decoder
         self.deconv1 = DeconvBlock(num_filter * 4, num_filter * 2)
         self.deconv2 = DeconvBlock(num_filter * 2, num_filter)
-        self.deconv3 = ConvBlock(num_filter, output_dim, kernel_size=7, stride=1, padding=0, activation='tanh', batch_norm=False)
+        self.deconv3 = ConvBlock(
+            num_filter,
+            output_dim,
+            kernel_size=7,
+            stride=1,
+            padding=0,
+            activation="tanh",
+            batch_norm=False,
+        )
 
     def forward(self, x):
         # Encoder
@@ -198,7 +251,7 @@ class AutoEncoder_VGG(nn.Module):
         self.encoder1 = nn.Sequential(
             nn.Conv2d(3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
             nn.BatchNorm2d(64),
-            nn.ReLU(inplace=True)
+            nn.ReLU(inplace=True),
         )
         self.encoder2 = nn.Sequential(
             nn.Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
@@ -209,22 +262,26 @@ class AutoEncoder_VGG(nn.Module):
         self.encoder3 = nn.Sequential(
             nn.Conv2d(64, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
             nn.BatchNorm2d(128),
-            nn.ReLU(inplace=True)
+            nn.ReLU(inplace=True),
         )
         self.encoder4 = nn.Sequential(
             nn.Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
             nn.BatchNorm2d(128),
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2)
+            nn.MaxPool2d(kernel_size=2, stride=2),
         )
 
         self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(128, 64, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1)),
+            nn.ConvTranspose2d(
+                128, 64, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1)
+            ),
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True),
-            nn.ConvTranspose2d(64, 3, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1)),
+            nn.ConvTranspose2d(
+                64, 3, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1)
+            ),
             nn.BatchNorm2d(3),
-            nn.ReLU(inplace=True)
+            nn.ReLU(inplace=True),
         )
 
     def forward(self, x):
@@ -242,7 +299,7 @@ class AutoEncoder_VGG_mnist(nn.Module):
         self.encoder1 = nn.Sequential(
             nn.Conv2d(1, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
             nn.BatchNorm2d(64),
-            nn.ReLU(inplace=True)
+            nn.ReLU(inplace=True),
         )
         self.encoder2 = nn.Sequential(
             nn.Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
@@ -253,22 +310,26 @@ class AutoEncoder_VGG_mnist(nn.Module):
         self.encoder3 = nn.Sequential(
             nn.Conv2d(64, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
             nn.BatchNorm2d(128),
-            nn.ReLU(inplace=True)
+            nn.ReLU(inplace=True),
         )
         self.encoder4 = nn.Sequential(
             nn.Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
             nn.BatchNorm2d(128),
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2)
+            nn.MaxPool2d(kernel_size=2, stride=2),
         )
 
         self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(128, 64, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1)),
+            nn.ConvTranspose2d(
+                128, 64, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1)
+            ),
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True),
-            nn.ConvTranspose2d(64, 1, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1)),
+            nn.ConvTranspose2d(
+                64, 1, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1)
+            ),
             nn.BatchNorm2d(1),
-            nn.ReLU(inplace=True)
+            nn.ReLU(inplace=True),
         )
 
     def forward(self, x):
@@ -281,7 +342,9 @@ class AutoEncoder_VGG_mnist(nn.Module):
 
 
 class AEVGG_classifier(nn.Module):
-    def __init__(self, ):
+    def __init__(
+        self,
+    ):
         super(AEVGG_classifier, self).__init__()
         self.autoencoder = AutoEncoder_VGG()
         self.vgg16 = VGG16_classifier()

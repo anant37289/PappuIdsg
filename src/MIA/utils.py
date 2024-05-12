@@ -6,11 +6,7 @@ import os
 
 
 # Prepare data for Attack Model
-def prepare_attack_data(model,
-                        iterator,
-                        device,
-                        top_k=False,
-                        test_dataset=False):
+def prepare_attack_data(model, iterator, device, top_k=False, test_dataset=False):
     attackX = []
     attackY = []
 
@@ -43,12 +39,9 @@ def prepare_attack_data(model,
     return attackX, attackY
 
 
-def train_per_epoch(model,
-                    train_iterator,
-                    criterion,
-                    optimizer,
-                    device,
-                    bce_loss=False):
+def train_per_epoch(
+    model, train_iterator, criterion, optimizer, device, bce_loss=False
+):
     epoch_loss = 0
     epoch_acc = 0
     correct = 0
@@ -88,11 +81,7 @@ def train_per_epoch(model,
     return epoch_loss, epoch_acc
 
 
-def val_per_epoch(model,
-                  val_iterator,
-                  criterion,
-                  device,
-                  bce_loss=False):
+def val_per_epoch(model, val_iterator, criterion, device, bce_loss=False):
     epoch_loss = 0
     epoch_acc = 0
     correct = 0
@@ -130,17 +119,19 @@ def val_per_epoch(model,
 ###############################
 # Training Attack Model
 ###############################
-def train_attack_model(model,
-                       dataset,
-                       criterion,
-                       optimizer,
-                       lr_scheduler,
-                       device,
-                       model_path='./model',
-                       kpt_path='best_model.ckpt',
-                       epochs=10,
-                       b_size=20,
-                       num_workers=1):
+def train_attack_model(
+    model,
+    dataset,
+    criterion,
+    optimizer,
+    lr_scheduler,
+    device,
+    model_path="./model",
+    kpt_path="best_model.ckpt",
+    epochs=10,
+    b_size=20,
+    num_workers=1,
+):
     n_validation = 1000  # number of validation samples
     best_valacc = 0
     stop_count = 0
@@ -161,30 +152,35 @@ def train_attack_model(model,
     # #Create Attack Dataset
     attackdataset = TensorDataset(t_X, t_Y)
 
-    print('Shape of Attack Feature Data : {}'.format(t_X.shape))
-    print('Shape of Attack Target Data : {}'.format(t_Y.shape))
-    print('Length of Attack Model train dataset : [{}]'.format(len(attackdataset)))
-    print('Epochs [{}] and Batch size [{}] for Attack Model training'.format(epochs, b_size))
+    print("Shape of Attack Feature Data : {}".format(t_X.shape))
+    print("Shape of Attack Target Data : {}".format(t_Y.shape))
+    print("Length of Attack Model train dataset : [{}]".format(len(attackdataset)))
+    print(
+        "Epochs [{}] and Batch size [{}] for Attack Model training".format(
+            epochs, b_size
+        )
+    )
 
     # Create Train and Validation Split
     n_train_samples = len(attackdataset) - n_validation
-    train_data, val_data = torch.utils.data.random_split(attackdataset,
-                                                         [n_train_samples, n_validation])
+    train_data, val_data = torch.utils.data.random_split(
+        attackdataset, [n_train_samples, n_validation]
+    )
 
-    train_loader = torch.utils.data.DataLoader(dataset=train_data,
-                                               batch_size=b_size,
-                                               shuffle=True,
-                                               num_workers=num_workers)
+    train_loader = torch.utils.data.DataLoader(
+        dataset=train_data, batch_size=b_size, shuffle=True, num_workers=num_workers
+    )
 
-    val_loader = torch.utils.data.DataLoader(dataset=val_data,
-                                             batch_size=b_size,
-                                             shuffle=False,
-                                             num_workers=num_workers)
+    val_loader = torch.utils.data.DataLoader(
+        dataset=val_data, batch_size=b_size, shuffle=False, num_workers=num_workers
+    )
 
-    print('----Attack Model Training------')
+    print("----Attack Model Training------")
     for i in range(epochs):
 
-        train_loss, train_acc = train_per_epoch(model, train_loader, criterion, optimizer, device)
+        train_loss, train_acc = train_per_epoch(
+            model, train_loader, criterion, optimizer, device
+        )
         valid_loss, valid_acc = val_per_epoch(model, val_loader, criterion, device)
 
         valid_loss_hist.append(valid_loss)
@@ -193,10 +189,13 @@ def train_attack_model(model,
 
         lr_scheduler.step()
 
-        print('Epoch [{}/{}], Train Loss: {:.3f} | Train Acc: {:.2f}% | Val Loss: {:.3f} | Val Acc: {:.2f}%'
-              .format(i + 1, epochs, train_loss, train_acc * 100, valid_loss, valid_acc * 100))
+        print(
+            "Epoch [{}/{}], Train Loss: {:.3f} | Train Acc: {:.2f}% | Val Loss: {:.3f} | Val Acc: {:.2f}%".format(
+                i + 1, epochs, train_loss, train_acc * 100, valid_loss, valid_acc * 100
+            )
+        )
 
-        print('Saving model checkpoint')
+        print("Saving model checkpoint")
         best_valacc = valid_acc
         # Store best model weights
         best_model = copy.deepcopy(model.state_dict())
@@ -208,44 +207,56 @@ def train_attack_model(model,
 ###################################
 # Training Target and Shadow Model
 ###################################
-def train_model(model,
-                train_loader,
-                val_loader,
-                test_loader,
-                loss,
-                optimizer,
-                device,
-                model_path,
-                num_epochs=50,
-                top_k=False,
-                is_target=False):
+def train_model(
+    model,
+    train_loader,
+    val_loader,
+    test_loader,
+    loss,
+    optimizer,
+    device,
+    model_path,
+    num_epochs=50,
+    top_k=False,
+    is_target=False,
+):
     best_valacc = 0
     train_loss_hist = []
     valid_loss_hist = []
     val_acc_hist = []
 
     if is_target:
-        print('----Target model training----')
+        print("----Target model training----")
     else:
-        print('---Shadow model training----')
+        print("---Shadow model training----")
 
     # Path for saving best target and shadow models
-    target_path = os.path.join(model_path, 'best_target_model.ckpt')
-    shadow_path = os.path.join(model_path, 'best_shadow_model.ckpt')
+    target_path = os.path.join(model_path, "best_target_model.ckpt")
+    shadow_path = os.path.join(model_path, "best_shadow_model.ckpt")
 
     for epoch in range(num_epochs):
 
-        train_loss, train_acc = train_per_epoch(model, train_loader, loss, optimizer, device)
+        train_loss, train_acc = train_per_epoch(
+            model, train_loader, loss, optimizer, device
+        )
         valid_loss, valid_acc = val_per_epoch(model, val_loader, loss, device)
 
         valid_loss_hist.append(valid_loss)
         train_loss_hist.append(train_loss)
         val_acc_hist.append(valid_acc)
 
-        print('Epoch [{}/{}], Train Loss: {:.3f} | Train Acc: {:.2f}% | Val Loss: {:.3f} | Val Acc: {:.2f}%'
-              .format(epoch + 1, num_epochs, train_loss, train_acc * 100, valid_loss, valid_acc * 100))
+        print(
+            "Epoch [{}/{}], Train Loss: {:.3f} | Train Acc: {:.2f}% | Val Loss: {:.3f} | Val Acc: {:.2f}%".format(
+                epoch + 1,
+                num_epochs,
+                train_loss,
+                train_acc * 100,
+                valid_loss,
+                valid_acc * 100,
+            )
+        )
 
-        print('Saving model checkpoint')
+        print("Saving model checkpoint")
         best_valacc = valid_acc
         # Store best model weights
         best_model = copy.deepcopy(model.state_dict())
@@ -255,17 +266,25 @@ def train_model(model,
             torch.save(best_model, shadow_path)
 
     if is_target:
-        print('----Target model training finished----')
-        print('Validation Accuracy for the Target Model is: {:.2f} %'.format(100 * best_valacc))
+        print("----Target model training finished----")
+        print(
+            "Validation Accuracy for the Target Model is: {:.2f} %".format(
+                100 * best_valacc
+            )
+        )
     else:
-        print('----Shadow model training finished-----')
-        print('Validation Accuracy for the Shadow Model is: {:.2f} %'.format(100 * best_valacc))
+        print("----Shadow model training finished-----")
+        print(
+            "Validation Accuracy for the Shadow Model is: {:.2f} %".format(
+                100 * best_valacc
+            )
+        )
 
     if is_target:
-        print('----LOADING the best Target model for Test----')
+        print("----LOADING the best Target model for Test----")
         model.load_state_dict(torch.load(target_path))
     else:
-        print('----LOADING the best Shadow model for Test----')
+        print("----LOADING the best Shadow model for Test----")
         model.load_state_dict(torch.load(shadow_path))
 
     # As the model is fully trained, time to prepare data for attack model.
@@ -273,7 +292,7 @@ def train_model(model,
     attack_X, attack_Y = prepare_attack_data(model, train_loader, device, top_k)
 
     # In test phase, we don't need to compute gradients (for memory efficiency)
-    print('----Test the Trained Network----')
+    print("----Test the Trained Network----")
     model.eval()
     with torch.no_grad():
         correct = 0
@@ -300,11 +319,16 @@ def train_model(model,
             attack_Y.append(torch.zeros(probs_test.size(0), dtype=torch.long))
 
         if is_target:
-            print('Test Accuracy of the Target model: {:.2f}%'.format(100 * correct / total))
+            print(
+                "Test Accuracy of the Target model: {:.2f}%".format(
+                    100 * correct / total
+                )
+            )
         else:
-            print('Test Accuracy of the Shadow model: {:.2f}%'.format(100 * correct / total))
+            print(
+                "Test Accuracy of the Shadow model: {:.2f}%".format(
+                    100 * correct / total
+                )
+            )
 
     return attack_X, attack_Y
-
-
-
