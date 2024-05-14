@@ -402,51 +402,29 @@ if __name__ == "__main__":
         sum_weights1, sum_weights2, sum_weights3 = [], [], []
         print(f"\n | Global Training Round : {epoch + 1} |\n")
 
-        # make mask
-        L = len(G_weights)
-        K = (args.num_users // 4) * 4
-        Lv = torch.ones((L, K))
-
-        for i in range(len(Lv)):
-            index = list(range(0, K))
-            sample_idx = random.sample(index, K // 4)
-            Lv[i, sample_idx] = 0.5
-            index = [idx for idx in index if idx not in sample_idx]
-            sample_idx = random.sample(index, K // 4)
-            Lv[i, sample_idx] = -0.5
-            index = [idx for idx in index if idx not in sample_idx]
-            sample_idx = random.sample(index, K // 4)
-            Lv[i, sample_idx] = -1
-
         for idx in range(args.num_users):
             global_model.load_state_dict(global_model_local_weights[idx])
             D_B.load_state_dict(D_B_local_weights[idx])
             C.load_state_dict(C_local_weights[idx])
             local_G = copy.deepcopy(G)
             local_Gwt = local_G.state_dict()
-            if ((args.num_users % 4)%2) == 1 and idx != 0:
-                for layer, key in enumerate(local_Gwt.keys()):
-                    if Lv[layer, idx - args.num_users % 4] == 0.5 or Lv[layer, idx - args.num_users % 4] == -0.5:
-                        local_Gwt[key] = (
-                            local_Gwt[key]
-                            + args.alpha * Lv[layer, idx - args.num_users % 4] * g_glb_prime[key]
-                        )
-                    else:
-                        local_Gwt[key] = (
-                            local_Gwt[key]
-                            + args.alpha * Lv[layer, idx - args.num_users % 4] * g_glb[key]
-                        )
-            elif ((args.num_users % 4) % 2) == 0:
-                for layer, key in enumerate(local_Gwt.keys()):
-                    if Lv[layer, idx - args.num_users % 4] == 0.5 or Lv[layer, idx - args.num_users % 4] == -0.5:
-                        local_Gwt[key] = (
-                            local_Gwt[key]
-                            + args.alpha * Lv[layer, idx - args.num_users % 4] * g_glb_prime[key]
-                        )
-                    else:
-                        local_Gwt[key] = (
-                            local_Gwt[key] + args.alpha * Lv[layer, idx - args.num_users % 4] * g_glb[key]
-                        )
+            for layer,key in enumerate(local_Gwt.keys()):
+                mask1 = torch.ones(local_Gwt[key].shape[0]).to(device)
+                mask05 = torch.ones(local_Gwt[key].shape[0]).to(device)
+                mask_size = mask1.size()[0]
+
+                perm = torch.randperm(mask_size)
+                mask1[perm[0:mask_size//4]]=-1
+                mask1[perm[mask_size//4:mask_size//2]]=1
+                mask1[perm[mask_size//2:]]=0
+
+                mask05[perm[0:mask_size//2]]=0
+                mask05[perm[mask_size//2:3*mask_size//4]]=0.5
+                mask05[perm[3*mask_size//4:]]=-0.5
+                if "bias" in key:
+                  local_Gwt[key] = local_Gwt[key] + args.alpha*mask1*g_glb[key]+args.alpha*mask05*g_glb_prime[key]
+                if "weight" in key:
+                  local_Gwt[key] = local_Gwt[key] + args.alpha*mask1[:,None,None,None]*g_glb[key]+args.alpha*mask05[:,None,None,None]*g_glb_prime[key]
             local_G.load_state_dict(local_Gwt)
             local_model = LocalUpdate(
                 args=args,
