@@ -244,7 +244,7 @@ def create_attack(num, dataset, victim, others):
         Fea = AutoEncoder_VGG().to(device)
         F_O = AutoEncoder_VGG().to(device)
 
-    modelPath = "./cifar_model/"  # the model dir
+    modelPath = f"./{args.model_dir}/"  # the model dir
     G.load_state_dict(
         torch.load(modelPath + "0_generator_param.pkl")
     )  # victim generator
@@ -346,7 +346,7 @@ def create_attack(num, dataset, victim, others):
 if __name__ == "__main__":
     start_time = time.time()
     args = args_parser()
-    model_dir = "./cifar_model/"
+    model_dir = f"./{args.model_dir}/"
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     train_dataset, test_dataset, user_groups = get_dataset(args)
