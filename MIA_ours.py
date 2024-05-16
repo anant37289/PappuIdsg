@@ -347,6 +347,8 @@ if __name__ == "__main__":
     start_time = time.time()
     args = args_parser()
     model_dir = f"./{args.model_dir}/"
+    if not os.path.exists(model_dir):
+        os.makedirs(model_dir)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     train_dataset, test_dataset, user_groups = get_dataset(args)
@@ -419,12 +421,12 @@ if __name__ == "__main__":
                 mask1[perm[mask_size//2:]]=0
 
                 mask05[perm[0:mask_size//2]]=0
-                mask05[perm[mask_size//2:3*mask_size//4]]=0.5
-                mask05[perm[3*mask_size//4:]]=-0.5
+                mask05[perm[mask_size//2:3*mask_size//4]]=2
+                mask05[perm[3*mask_size//4:]]=-2
                 if "bias" in key:
-                  local_Gwt[key] = local_Gwt[key] + args.alpha*mask1*g_glb[key]+args.alpha*mask05*g_glb_prime[key]
+                  local_Gwt[key] = local_Gwt[key] + args.alpha*mask1*g_glb[key]+args.alpha**2*mask05*g_glb_prime[key]
                 if "weight" in key:
-                  local_Gwt[key] = local_Gwt[key] + args.alpha*mask1[:,None,None,None]*g_glb[key]+args.alpha*mask05[:,None,None,None]*g_glb_prime[key]
+                  local_Gwt[key] = local_Gwt[key] + args.alpha**2*mask1[:,None,None,None]*g_glb[key]+args.alpha*mask05[:,None,None,None]*g_glb_prime[key]
             local_G.load_state_dict(local_Gwt)
             local_model = LocalUpdate(
                 args=args,
