@@ -95,9 +95,9 @@ class LocalUpdate(object):
                 # input image data
                 imgs = real_A.numpy().astype("float32")
                 if args.dataset == "mnist" or args.dataset == "fmnist":
-                    real_B = EtC_mnist(imgs)
+                    real_B = imgs
                 else:
-                    real_B = EtC_cifar4(imgs)
+                    real_B = imgs
 
                 real_B = Variable(real_B.to(device))
                 real_A = Variable(real_A.to(device))
