@@ -99,6 +99,8 @@ class LocalUpdate(object):
                 else:
                     real_B = EtC_cifar4(imgs)
 
+                real_A = real_B # Both are encrypted images now 
+                
                 real_B = Variable(real_B.to(device))
                 real_A = Variable(real_A.to(device))
                 label = label.to(device)
