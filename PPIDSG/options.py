@@ -10,6 +10,7 @@ def args_parser():
         default="mnist",
         help="input dataset: mnist, cifar, svhn, fmnist",
     )
+    parser.add_argument("--test_accuracy_file", default="test_accuracy.txt")
     parser.add_argument("--model_dir",default="cifar_model")
     parser.add_argument("--batch_size", type=int, default=64, help="train batch size")
     parser.add_argument("--num_users", type=int, default=10, help="number of users: K")

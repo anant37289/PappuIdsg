@@ -127,6 +127,10 @@ if __name__ == "__main__":
 
         # test accuracy
         test_acc = test_inference(G, global_model, C, test_dataset)
-        print("|---- Test Accuracy: {:.2f}%".format(100 * test_acc))
+        result = "|---- Test Accuracy: {:.2f}%".format(100 * test_acc)
+        file1 = open(f"{args.test_accuracy_file}", "a")
+        file1.write(result + "\n")
+        file1.close()
+        print(result)
     torch.save(G_weights, model_dir + "generator_param.pkl")
     print("\n Total Run Time: {0:0.4f}".format(time.time() - start_time))
