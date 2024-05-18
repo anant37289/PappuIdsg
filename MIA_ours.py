@@ -460,7 +460,11 @@ if __name__ == "__main__":
 
         test_acc = test_inference(G, global_model, C, test_dataset)  # test accuracy
         if test_acc > best_test_acc:
-            print("|---- Test Accuracy: {:.2f}%".format(100 * test_acc))
+            result = "|---- Test Accuracy: {:.2f}%".format(100 * test_acc)
+            file1 = open(f"{args.test_accuracy_file}", "a")
+            file1.write(result + "\n")
+            file1.close()
+            print(result)
             torch.save(G_weights, model_dir + "generator_param.pkl")
             for i in range(len(sum_weights1)):
                 torch.save(
