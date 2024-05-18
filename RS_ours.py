@@ -14,7 +14,13 @@ parser.add_argument(
     help="input dataset: mnist, cifar, svhn, fmnist",
 )
 
-datas = parser.parse_args().dataset
+parser.add_argument(
+    "--model_dir",
+    required=False,
+    default="cifar_model",
+)
+args = parser.parse_args()
+datas = args.dataset
 # hyperparameter setting
 # datas = 'FMNIST' # mnist, fmnist, cifar10, svhn
 dummys = "test"  # dummy data: the random input, test:the image from test dataset
@@ -28,17 +34,17 @@ else:
 
 # load the trained generater parameters from the client's sharing
 if datas == "CIFAR10":
-    modelPath = "./cifar_model/"
-    target_model.load_state_dict(torch.load(modelPath + "generator_param.pkl"))
+    modelPath = args.model_dir
+    target_model.load_state_dict(torch.load(modelPath + "/generator_param.pkl"))
 elif datas == "MNIST":
-    modelPath = "./mnist_model/"
-    target_model.load_state_dict(torch.load(modelPath + "generator_param.pkl"))
+    modelPath = args.model_dir
+    target_model.load_state_dict(torch.load(modelPath + "/generator_param.pkl"))
 elif datas == "SVHN":
-    modelPath = "./svhn_model/"
-    target_model.load_state_dict(torch.load(modelPath + "generator_param.pkl"))
+    modelPath = args.model_dir
+    target_model.load_state_dict(torch.load(modelPath + "/generator_param.pkl"))
 elif datas == "FMNIST":
-    modelPath = "./fmnist_model/"
-    target_model.load_state_dict(torch.load(modelPath + "generator_param.pkl"))
+    modelPath = args.model_dir
+    target_model.load_state_dict(torch.load(modelPath + "/generator_param.pkl"))
 
 apply_transform = transforms.Compose([transforms.ToTensor()])
 
@@ -120,6 +126,11 @@ for i, (images, labels) in enumerate(test_loader):
     img = pred_output.to(device)
     orig = (test_loader_X.to(device) + 1) / 2 * 255
     img = (img + 1) / 2 * 255
+    # show reconstructed image
+    if i==0:
+      simg = to_pil_image(pred_output[0].cpu())
+      simg.show()
+      simg.save(f'./pictures/dummy_{datas}.jpg')
     delta = orig - img
     delta = delta.reshape(delta.shape[0], -1)
     mse = torch.mean(delta**2, dim=1)

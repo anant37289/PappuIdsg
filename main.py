@@ -24,7 +24,7 @@ if __name__ == "__main__":
     args = args_parser()
     exp_details(args)
 
-    model_dir = args.dataset + "_model/"
+    model_dir = args.model_dir
 
     if not os.path.exists(model_dir):
         os.mkdir(model_dir)
@@ -65,43 +65,44 @@ if __name__ == "__main__":
     global_model_local_weights = [global_weights for i in range(args.num_users)]
     D_B_local_weights = [D_B_weights for i in range(args.num_users)]
     C_local_weights = [C_weights for i in range(args.num_users)]
-
-    # federated learning
     g_glb = copy.deepcopy(G_weights)
+    g_glb_prime = copy.deepcopy(G_weights)
     for key in g_glb.keys():
         g_glb[key] = 0
+    for key in g_glb_prime.keys():
+        g_glb_prime[key] = 0
 
+    # Global Weight Constants
+    w_glb_prime = copy.deepcopy(G_weights)
+    w_glb_double_prime = copy.deepcopy(G_weights)
+    best_test_acc = 0
     for epoch in tqdm(range(args.num_epochs)):
-
         G_local_weights = []
         print(f"\n | Global Training Round : {epoch + 1} |\n")
 
-        # make mask
-        L = len(G_weights)
-        K = (args.num_users // 2) * 2
-        index = list(range(0, K))
-        Lv = torch.ones((L, K))
-        for i in range(len(Lv)):
-            sample_idx = random.sample(index, K // 2)
-            Lv[i, sample_idx] = -1
-
         for idx in range(args.num_users):
-            global_model.load_state_dict(global_model_local_weights[idx])  # local train
-            D_B.load_state_dict(D_B_local_weights[idx])  # local train
-            C.load_state_dict(C_local_weights[idx])  # local train
-            # G<=local_G[mutated]
+            global_model.load_state_dict(global_model_local_weights[idx])
+            D_B.load_state_dict(D_B_local_weights[idx])
+            C.load_state_dict(C_local_weights[idx])
             local_G = copy.deepcopy(G)
             local_Gwt = local_G.state_dict()
-            if args.num_users % 2 == 1 and idx != 0:
-                for layer, key in enumerate(local_Gwt.keys()):
-                    local_Gwt[key] = (
-                        local_Gwt[key] + args.alpha * Lv[layer, idx - 1] * g_glb[key]
-                    )
-            elif args.num_users % 2 == 0:
-                for layer, key in enumerate(local_Gwt.keys()):
-                    local_Gwt[key] = (
-                        local_Gwt[key] + args.alpha * Lv[layer, idx] * g_glb[key]
-                    )
+            for layer,key in enumerate(local_Gwt.keys()):
+                mask1 = torch.ones(local_Gwt[key].shape[0]).to(device)
+                mask05 = torch.ones(local_Gwt[key].shape[0]).to(device)
+                mask_size = mask1.size()[0]
+
+                perm = torch.randperm(mask_size)
+                mask1[perm[0:mask_size//4]]=-1
+                mask1[perm[mask_size//4:mask_size//2]]=1
+                mask1[perm[mask_size//2:]]=0
+
+                mask05[perm[0:mask_size//2]]=0
+                mask05[perm[mask_size//2:3*mask_size//4]]=2
+                mask05[perm[3*mask_size//4:]]=-2
+                if "bias" in key:
+                  local_Gwt[key] = local_Gwt[key] + args.alpha*mask1*g_glb[key]+args.alpha**2*mask05*g_glb_prime[key]
+                if "weight" in key:
+                  local_Gwt[key] = local_Gwt[key] + args.alpha*mask1[:,None,None,None]*g_glb[key]+args.alpha**2*mask05[:,None,None,None]*g_glb_prime[key]
             local_G.load_state_dict(local_Gwt)
             local_model = LocalUpdate(
                 args=args,
@@ -116,21 +117,23 @@ if __name__ == "__main__":
                 global_round=epoch,
             )
             G_local_weights.append(copy.deepcopy(v))
-            D_B_local_weights[idx] = copy.deepcopy(u)  # discriminator
-            global_model_local_weights[idx] = copy.deepcopy(w)  # feature extractor
+            D_B_local_weights[idx] = copy.deepcopy(u)
+            global_model_local_weights[idx] = copy.deepcopy(w)
 
+        # update global weights and local weights
+        w_glb_double_prime = copy.deepcopy(w_glb_prime)
         w_glb_prime = copy.deepcopy(G_weights)
         G_weights = average_weights(G_local_weights)  # federated train
         for key in G_weights.keys():
             g_glb[key] = G_weights[key] - w_glb_prime[key]
+        for key in G_weights.keys():
+            g_glb_prime[key] = G_weights[key] - w_glb_double_prime[key]
         G.load_state_dict(G_weights)  # each client generator
 
-        # test accuracy
-        test_acc = test_inference(G, global_model, C, test_dataset)
-        result = "|---- Test Accuracy: {:.2f}%".format(100 * test_acc)
-        file1 = open(f"{args.test_accuracy_file}", "a")
-        file1.write(result + "\n")
-        file1.close()
-        print(result)
-    torch.save(G_weights, model_dir + "generator_param.pkl")
+        test_acc = test_inference(G, global_model, C, test_dataset)  # test accuracy
+        if test_acc > best_test_acc:
+            print("|---- Test Accuracy: {:.2f}%".format(100 * test_acc))
+            torch.save(G_weights, model_dir + "/generator_param.pkl")
+            best_test_acc = test_acc
+            
     print("\n Total Run Time: {0:0.4f}".format(time.time() - start_time))
