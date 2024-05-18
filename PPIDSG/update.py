@@ -95,7 +95,7 @@ class LocalUpdate(object):
                 # input image data
                 # Now none of the images are encrypted
                 img = real_A.numpy().astype("float32")
-                real_B = torch.from_numpy(np.transpose(img, (0, 3, 1, 2)) / 255.0)
+                real_B = torch.from_numpy(img)
                 real_B = Variable(real_B.to(device))
                 real_A = Variable(real_A.to(device))
                 label = label.to(device)
