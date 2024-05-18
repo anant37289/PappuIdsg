@@ -75,7 +75,7 @@ if __name__ == "__main__":
     # Global Weight Constants
     w_glb_prime = copy.deepcopy(G_weights)
     w_glb_double_prime = copy.deepcopy(G_weights)
-    best_test_acc = 0
+    test_acc_arr = []
     for epoch in tqdm(range(args.num_epochs)):
         G_local_weights = []
         print(f"\n | Global Training Round : {epoch + 1} |\n")
@@ -131,9 +131,9 @@ if __name__ == "__main__":
         G.load_state_dict(G_weights)  # each client generator
 
         test_acc = test_inference(G, global_model, C, test_dataset)  # test accuracy
-        if test_acc > best_test_acc:
-            print("|---- Test Accuracy: {:.2f}%".format(100 * test_acc))
-            torch.save(G_weights, model_dir + "/generator_param.pkl")
-            best_test_acc = test_acc
-            
+        test_acc_arr.append("{:.2f}".format(100 * test_acc))
+        print("|---- Test Accuracy: {:.2f}%".format(100 * test_acc))
+        torch.save(G_weights, model_dir + "/generator_param.pkl")
+    
+    print(test_acc_arr)
     print("\n Total Run Time: {0:0.4f}".format(time.time() - start_time))
