@@ -141,11 +141,12 @@ class LocalUpdate(object):
                 fake_features, _ = D_A_model(fake_A1)
                 fake_predicts = C(fake_features)
                 C_loss = self.criterion3(fake_predicts, label)
-
+                
+                # Now Classifier is not getting updated
                 # Back propagation
-                C_optimizer.zero_grad()
-                C_loss.backward(retain_graph=True)
-                C_optimizer.step()
+                # C_optimizer.zero_grad()
+                # C_loss.backward(retain_graph=True)
+                # C_optimizer.step()
 
                 # Train discriminator D_B
                 D_B_real_decision = self.D_B(real_B)
