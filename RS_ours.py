@@ -4,7 +4,8 @@ from torch.utils.data import DataLoader
 from PPIDSG.models import Generator
 import numpy as np
 import argparse
-
+import cv2
+import os
 # get dataset name from command line
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -128,9 +129,8 @@ for i, (images, labels) in enumerate(test_loader):
     img = (img + 1) / 2 * 255
     # show reconstructed image
     if i==0:
-      simg = to_pil_image(pred_output[0].cpu())
-      simg.show()
-      simg.save(f'./pictures/dummy_{datas}.jpg')
+      image_np = img[0].permute(1, 2, 0).cpu().detach().numpy()
+      cv2.imwrite(f"dummy_{datas}.jpg",image_np)
     delta = orig - img
     delta = delta.reshape(delta.shape[0], -1)
     mse = torch.mean(delta**2, dim=1)
