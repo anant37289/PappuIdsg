@@ -93,12 +93,8 @@ class LocalUpdate(object):
         for iter in range(1):
             for i, (real_A, label) in enumerate(self.trainloader):
                 # input image data
-                imgs = real_A.numpy().astype("float32")
-                if args.dataset == "mnist" or args.dataset == "fmnist":
-                    real_B = imgs
-                else:
-                    real_B = imgs
-
+                # Now none of the images are encrypted
+                real_B = real_A.numpy().astype("float32")
                 real_B = Variable(real_B.to(device))
                 real_A = Variable(real_A.to(device))
                 label = label.to(device)
