@@ -6,25 +6,14 @@ import numpy as np
 import argparse
 import cv2
 import os
+import matplotlib.pyplot as plt
+from PPIDSG.options import args_parser
 # get dataset name from command line
-parser = argparse.ArgumentParser()
-parser.add_argument(
-    "--dataset",
-    required=False,
-    default="mnist",
-    help="input dataset: mnist, cifar, svhn, fmnist",
-)
-
-parser.add_argument(
-    "--model_dir",
-    required=False,
-    default="cifar_model",
-)
-args = parser.parse_args()
+args = args_parser()
 datas = args.dataset
 # hyperparameter setting
 # datas = 'FMNIST' # mnist, fmnist, cifar10, svhn
-dummys = "test"  # dummy data: the random input, test:the image from test dataset
+dummys = args.setting  # dummy data: the random input, test:the image from test dataset
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 to_pil_image = transforms.ToPILImage()
 
@@ -115,29 +104,38 @@ elif datas == "FMNIST":
 train_loader = DataLoader(dataset=train_dataset, batch_size=64, shuffle=False)
 test_loader = DataLoader(dataset=test_dataset, batch_size=64, shuffle=False)
 
-psnrl = []
-for i, (images, labels) in enumerate(test_loader):
-    # print(i)
-    if datas == "MNIST" or datas == "FMNIST":
-        test_loader_X = images.view(images.size(0), 1, 28, 28)
-    elif datas == "CIFAR10" or datas == "SVHN":
-        test_loader_X = images.view(images.size(0), 3, 32, 32)
+# image
+test_loader_X = next(iter(test_loader))[0].clone().detach()
+test_loader_X = test_loader_X.to(device)
 
-    _, pred_output = target_model(test_loader_X.to(device))
-    img = pred_output.to(device)
-    orig = (test_loader_X.to(device) + 1) / 2 * 255
-    img = (img + 1) / 2 * 255
-    # show reconstructed image
-    if i==0:
-      image_np = img[0].permute(1, 2, 0).cpu().detach().numpy()
-      cv2.imwrite(f"dummy_{datas}.jpg",image_np)
-    delta = orig - img
-    delta = delta.reshape(delta.shape[0], -1)
-    mse = torch.mean(delta**2, dim=1)
-    max_pixel = 255
-    psnr = 20 * torch.log(max_pixel / torch.sqrt(mse)) / (torch.log(torch.tensor(10)))
-    psnr = torch.sum(psnr) / len(test_loader_X)
-    psnrl.append(psnr.item())
-    del pred_output, img, orig, psnr, delta
+# label
+if datas == 'MNIST' or datas == 'FMNIST':
+    test_loader_Y = test_loader_X[1].view(1, 1, 28, 28)
+elif datas == 'CIFAR10':
+    test_loader_Y = test_loader_X[1].view(1, 3, 32, 32)
+elif datas == 'SVHN':
+    test_loader_Y = test_loader_X[17].view(1, 3, 32, 32)
 
-print(sum(psnrl) / len(psnrl))
+if dummys == 'dummy_data':
+    orig = torch.randn(test_loader_Y.size()).to(device)
+else:
+    orig = test_loader_X
+
+_, pred_output = target_model(orig)
+img = pred_output[0]
+image_np = pred_output[0].permute(1, 2, 0).cpu().detach().numpy()
+plt.axis("off")
+if image_np.shape[2]==1:
+    plt.imshow(image_np,cmap='Greys')
+    plt.savefig(f"dummy_{datas}_{dummys}.jpg")
+else:
+    plt.imshow(image_np)
+    plt.savefig(f"dummy_{datas}_{dummys}.jpg")
+
+orig = (orig+1)/2*255
+img = (img+1)/2*255
+mse = torch.mean((orig-img)**2)
+
+max_pixel = 255
+psnr = 20*torch.log(max_pixel/torch.sqrt(mse))/torch.log(torch.tensor(10))
+print(psnr.item())
