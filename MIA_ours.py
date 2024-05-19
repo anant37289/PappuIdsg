@@ -424,9 +424,9 @@ if __name__ == "__main__":
                 mask05[perm[mask_size//2:3*mask_size//4]]=2
                 mask05[perm[3*mask_size//4:]]=-2
                 if "bias" in key:
-                  local_Gwt[key] = local_Gwt[key] + args.alpha*mask1*g_glb[key]+args.alpha**2*mask05*g_glb_prime[key]
+                  local_Gwt[key] = local_Gwt[key] + args.alpha*mask1*g_glb[key]+args.alpha*mask05*g_glb_prime[key]
                 if "weight" in key:
-                  local_Gwt[key] = local_Gwt[key] + args.alpha*mask1[:,None,None,None]*g_glb[key]+args.alpha**2*mask05[:,None,None,None]*g_glb_prime[key]
+                  local_Gwt[key] = local_Gwt[key] + args.alpha*mask1[:,None,None,None]*g_glb[key]+args.alpha*mask05[:,None,None,None]*g_glb_prime[key]
             local_G.load_state_dict(local_Gwt)
             local_model = LocalUpdate(
                 args=args,
