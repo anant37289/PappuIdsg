@@ -12,6 +12,7 @@ def args_parser():
     )
     parser.add_argument("--test_accuracy_file", default="test_accuracy.txt")
     parser.add_argument("--model_dir",default="cifar_model")
+    parser.add_argument("--setting",default="dummy_data")
     parser.add_argument("--batch_size", type=int, default=64, help="train batch size")
     parser.add_argument("--num_users", type=int, default=10, help="number of users: K")
     parser.add_argument(
