@@ -127,10 +127,10 @@ image_np = pred_output[0].permute(1, 2, 0).cpu().detach().numpy()
 plt.axis("off")
 if image_np.shape[2]==1:
     plt.imshow(image_np,cmap='Greys')
-    plt.savefig(f"dummy_{datas}_{dummys}.jpg")
+    plt.savefig(f"dummy_{datas}_{dummys}.jpg",bbox_inches='tight')
 else:
     plt.imshow(image_np)
-    plt.savefig(f"dummy_{datas}_{dummys}.jpg")
+    plt.savefig(f"dummy_{datas}_{dummys}.jpg",bbox_inches='tight')
 
 orig = (orig+1)/2*255
 img = (img+1)/2*255
