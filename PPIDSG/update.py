@@ -97,7 +97,7 @@ class LocalUpdate(object):
                 if args.dataset == "mnist" or args.dataset == "fmnist":
                     real_B = EtC_mnist(imgs)
                 else:
-                    real_B = EtC_cifar4(imgs)
+                    real_B = EtC_cifar8(imgs)
 
                 real_B = Variable(real_B.to(device))
                 real_A = Variable(real_A.to(device))
