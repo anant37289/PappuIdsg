@@ -4,7 +4,7 @@ import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import datasets, transforms
-from src.EtC.EtC_cifar import EtC_cifar4
+from src.EtC.EtC_cifar import EtC_cifar2
 from src.EtC.EtC_mnist import EtC_mnist
 from src.models import LeNetZhu, ConvNet, ResNet18, LeNetZhu_mnist
 
@@ -167,7 +167,7 @@ def main():
                 device
             )  # the core of EtC, there are four ways(32*32)/two ways(28*28) to choose
         else:
-            images = EtC_cifar4(imgs).to(
+            images = EtC_cifar2(imgs).to(
                 device
             )  # the core of EtC, there are four ways(32*32)/two ways(28*28) to choose
         _, predicts = C(images)

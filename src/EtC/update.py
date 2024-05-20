@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
-from src.EtC.EtC_cifar import EtC_cifar4
+from src.EtC.EtC_cifar import EtC_cifar2
 from src.EtC.EtC_mnist import EtC_mnist
 
 
@@ -59,7 +59,7 @@ class LocalUpdate(object):
                         self.device
                     )  # mnist, fmnist: EtC_mnist; cifar10, svhn: EtC_cifar
                 else:
-                    image = EtC_cifar4(imgs).to(self.device)
+                    image = EtC_cifar2(imgs).to(self.device)
 
                 net.zero_grad()
                 _, log_probs = net(image)
