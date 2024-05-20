@@ -389,14 +389,18 @@ if __name__ == "__main__":
     C_local_weights = [C_weights for i in range(args.num_users)]
     g_glb = copy.deepcopy(G_weights)
     g_glb_prime = copy.deepcopy(G_weights)
+    g_glb_double_prime = copy.deepcopy(G_weights)
     for key in g_glb.keys():
         g_glb[key] = 0
     for key in g_glb_prime.keys():
         g_glb_prime[key] = 0
+    for key in g_glb_double_prime.keys():
+        g_glb_double_prime[key] = 0
 
     # Global Weight Constants
     w_glb_prime = copy.deepcopy(G_weights)
     w_glb_double_prime = copy.deepcopy(G_weights)
+    w_glb_triple_prime = copy.deepcopy(G_weights)
     best_test_acc = 0
     best_sum_weights1, best_sum_weights2, best_sum_weights3 = [], [], []
     for epoch in tqdm(range(args.num_epochs)):
@@ -412,21 +416,29 @@ if __name__ == "__main__":
             local_Gwt = local_G.state_dict()
             for layer,key in enumerate(local_Gwt.keys()):
                 mask1 = torch.ones(local_Gwt[key].shape[0]).to(device)
-                mask05 = torch.ones(local_Gwt[key].shape[0]).to(device)
+                mask2 = torch.ones(local_Gwt[key].shape[0]).to(device)
+                mask3 = torch.ones(local_Gwt[key].shape[0]).to(device)
+
                 mask_size = mask1.size()[0]
 
                 perm = torch.randperm(mask_size)
-                mask1[perm[0:mask_size//4]]=-1
-                mask1[perm[mask_size//4:mask_size//2]]=1
-                mask1[perm[mask_size//2:]]=0
+                mask1[perm[0:mask_size//6]]=-1
+                mask1[perm[mask_size//6:mask_size//3]]=1
+                mask1[perm[mask_size//3:]]=0
 
-                mask05[perm[0:mask_size//2]]=0
-                mask05[perm[mask_size//2:3*mask_size//4]]=2
-                mask05[perm[3*mask_size//4:]]=-2
+                mask2[perm[0:mask_size//3]]=0
+                mask2[perm[mask_size//3:mask_size//2]]=2
+                mask2[perm[mask_size//2:2*mask_size//3]]=-2
+                mask2[perm[2*mask_size//3:]]=0
+
+                mask3[perm[0:2*mask_size//3]]=0
+                mask3[perm[2*mask_size//3:5*mask_size//6]]=3
+                mask3[perm[5*mask_size//6:]]=-3
+
                 if "bias" in key:
-                  local_Gwt[key] = local_Gwt[key] + args.alpha*mask1*g_glb[key]+args.alpha**2*mask05*g_glb_prime[key]
+                  local_Gwt[key] = local_Gwt[key] + args.alpha*mask1*g_glb[key]+args.alpha**2*mask2*g_glb_prime[key]+args.alpha**3*mask3*g_glb_double_prime[key]
                 if "weight" in key:
-                  local_Gwt[key] = local_Gwt[key] + args.alpha*mask1[:,None,None,None]*g_glb[key]+args.alpha**2*mask05[:,None,None,None]*g_glb_prime[key]
+                  local_Gwt[key] = local_Gwt[key] + args.alpha*mask1[:,None,None,None]*g_glb[key]+args.alpha**2*mask2[:,None,None,None]*g_glb_prime[key]+args.alpha**3*mask3[:,None,None,None]*g_glb_double_prime[key]
             local_G.load_state_dict(local_Gwt)
             local_model = LocalUpdate(
                 args=args,
@@ -449,6 +461,8 @@ if __name__ == "__main__":
             sum_weights3.append(copy.deepcopy(z))  # client classifier
 
         # update global weights and local weights
+
+        w_glb_triple_prime = copy.deepcopy(w_glb_double_prime)
         w_glb_double_prime = copy.deepcopy(w_glb_prime)
         w_glb_prime = copy.deepcopy(G_weights)
         G_weights = average_weights(G_local_weights)  # federated train
@@ -456,6 +470,8 @@ if __name__ == "__main__":
             g_glb[key] = G_weights[key] - w_glb_prime[key]
         for key in G_weights.keys():
             g_glb_prime[key] = G_weights[key] - w_glb_double_prime[key]
+        for key in G_weights.keys():
+            g_glb_double_prime[key] = G_weights[key] - w_glb_triple_prime[key]
         G.load_state_dict(G_weights)  # each client generator
 
         test_acc = test_inference(G, global_model, C, test_dataset)  # test accuracy
