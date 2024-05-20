@@ -26,7 +26,7 @@ def rotate(val, p):
 
 def negaposi(val, o):
     out = val
-    p = np.full((val.shape[0], 4, 4, 3), 255)  # 4: block size; 3: channel number
+    p = np.full((val.shape[0], 2, 2, 3), 255)  # 2: block size; 3: channel number
     if o == 0:
         for i in range(3):
             out[:, :, :, i] = p[:, :, :, i] - val[:, :, :, i]
