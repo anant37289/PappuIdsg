@@ -66,8 +66,8 @@ def channel_change(val, p):
     return out
 
 
-# 64: the block number in IS(need to change when the block size change)
-for i in range(64):
+# 16: the block number in IS(need to change when the block size change)
+for i in range(16):
     x = random.randint(0, 3)
     z = random.randint(0, 2)
     a = random.randint(0, 5)
