@@ -37,9 +37,13 @@ ax_inset.axis('off')  # Hide the axes for the inset image
 
 # Customize axes
 ax.set_xlim([0, 256])
-ax.set_xlabel('Pixel Value')
-ax.set_ylabel('Frequency')
+ax.set_xlabel('Pixel Value', fontsize=25)
+ax.set_ylabel('Frequency', fontsize=25)
 # ax.legend(loc='right left', fontsize=25)
+
+ax.tick_params(axis='x', labelsize=15)
+ax.tick_params(axis='y', labelsize=15)
+
 
 # Show the plot
 plt.savefig("encrypted.pdf")

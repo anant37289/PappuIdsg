@@ -25,9 +25,9 @@ plt.plot(epochs, our_proposed, 'r-o', label='our proposed', markersize=5)
 plt.plot(epochs, no_update, 'o-', color='peachpuff', label='no update', markersize=5)
 
 # Adding labels and title
-plt.xlabel('Epoch')
-plt.ylabel('Test Accuracy (%)')
-plt.title('Test Accuracy over Epochs')
+plt.xlabel('Epoch', fontsize=25)
+plt.ylabel('Test Accuracy (%)', fontsize=25)
+plt.title('Test Accuracy over Epochs', fontsize=25)
 
 # Adding a grid
 plt.grid(True)
@@ -36,8 +36,8 @@ plt.grid(True)
 plt.ylim(0, 80)
 
 # Adding ticks for better readability
-plt.xticks(np.arange(0, 101, 10))
-plt.yticks(np.arange(0, 81, 5))
+plt.xticks(np.arange(0, 101, 10), fontsize=20)
+plt.yticks(np.arange(0, 81, 10), fontsize=20)
 
 # Adding a legend
 plt.legend(fontsize=30)
