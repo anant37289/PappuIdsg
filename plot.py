@@ -4,7 +4,7 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from PIL import Image
 
 # Load the image
-image_path = 'original.jpeg'  # Replace with your image path
+image_path = 'encrypted.jpeg'  # Replace with your image path
 image = Image.open(image_path)
 
 # Convert image to numpy array
@@ -23,12 +23,12 @@ blue_values = image_array[:, :, 2].flatten()
 fig, ax = plt.subplots(figsize=(10, 6))
 
 # Plot histograms for each color channel
-ax.hist(red_values, bins=256, density=True, alpha=0.7, color='r', edgecolor='black', label='Red')
-ax.hist(green_values, bins=256, density=True, alpha=0.7, color='g', edgecolor='black', label='Green')
-ax.hist(blue_values, bins=256, density=True, alpha=0.7, color='b', edgecolor='black', label='Blue')
+ax.hist(red_values, bins=256, density=True, alpha=0.7, color='r', label='Red')
+ax.hist(green_values, bins=256, density=True, alpha=0.7, color='g', label='Green')
+ax.hist(blue_values, bins=256, density=True, alpha=0.7, color='b', label='Blue')
 
 # Add the title
-ax.text(0.5, 1.05, 'original', transform=ax.transAxes, fontsize=32, ha='center')
+ax.text(0.5, 1.05, 'generated', transform=ax.transAxes, fontsize=32, ha='center')
 
 # Add the inset image
 ax_inset = inset_axes(ax, width="20%", height="20%", loc='upper right')
@@ -39,7 +39,7 @@ ax_inset.axis('off')  # Hide the axes for the inset image
 ax.set_xlim([0, 256])
 ax.set_xlabel('Pixel Value')
 ax.set_ylabel('Frequency')
-ax.legend(loc='upper left')
+# ax.legend(loc='right left', fontsize=25)
 
 # Show the plot
-plt.show()
+plt.savefig("encrypted.pdf")

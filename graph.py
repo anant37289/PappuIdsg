@@ -19,9 +19,9 @@ no_update = list(map(float, no_update))
 # Plotting the data
 plt.figure(figsize=(15, 8))
 plt.plot(epochs, original_image, 'g-^', label='original image', markersize=5)
-plt.plot(epochs, encrypted_image, 'y-^', label='encrypted image', markersize=5)
+# plt.plot(epochs, encrypted_image, 'y-^', label='encrypted image', markersize=5)
 plt.plot(epochs, our_proposed, 'r-o', label='our proposed', markersize=5)
-plt.plot(epochs, local_train, 'b-s', label='local train', markersize=5)
+# plt.plot(epochs, local_train, 'b-s', label='local train', markersize=5)
 plt.plot(epochs, no_update, 'o-', color='peachpuff', label='no update', markersize=5)
 
 # Adding labels and title
@@ -40,7 +40,7 @@ plt.xticks(np.arange(0, 101, 10))
 plt.yticks(np.arange(0, 81, 5))
 
 # Adding a legend
-plt.legend()
+plt.legend(fontsize=30)
 
 # Display the plot
-plt.show()
+plt.savefig("Test_Accuracy_over_Epochs.pdf")
