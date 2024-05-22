@@ -15,18 +15,15 @@ block_2 = list(map(float, block_2))
 # Plotting the data
 plt.figure(figsize=(15, 8))
 plt.plot(epochs, block_8, 'g-^', label='block_size=8', markersize=5)
-# plt.plot(epochs, encrypted_image, 'y-^', label='encrypted image', markersize=5)
 plt.plot(epochs, block_4, 'r-o', label='block_size=4', markersize=5)
-# plt.plot(epochs, local_train, 'b-s', label='local train', markersize=5)
 plt.plot(epochs, block_2, 'o-', label='block_size=2', markersize=5)
 
 # Adding labels and title
 plt.xlabel('Epoch', fontsize=25)
 plt.ylabel('Test Accuracy (%)', fontsize=25)
-# plt.title('Test Accuracy over Epochs')
 
-# Adding a grid
-plt.grid(True)
+# Adding a grid (only major grid lines)
+plt.grid(which='major', axis='both', linestyle='-')
 
 # Setting y-axis limit
 plt.ylim(0, 80)
@@ -35,9 +32,13 @@ plt.ylim(0, 80)
 plt.xticks(np.arange(0, 101, 10), fontsize=20)
 plt.yticks(np.arange(0, 81, 10), fontsize=20)
 
+# Customizing the spines to remove the top horizontal line
+ax = plt.gca()
+ax.spines['top'].set_visible(False)
 
 # Adding a legend
 plt.legend(fontsize=30)
 
 # Display the plot
 plt.savefig("Block_size_over_epochs.pdf")
+
