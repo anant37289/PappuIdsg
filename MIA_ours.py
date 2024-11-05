@@ -143,7 +143,7 @@ def get_data_loader(dataset="mnist", batch=64, shadow_split=0.5, num_workers=0):
             root="./data/", train=False, download=False, transform=test_transforms
         )
     elif dataset == "cifar":
-        test_set = torchvision.datasets.CIFAR100(
+        test_set = torchvision.datasets.CIFAR10(
             root="./data/cifar/", train=False, download=False, transform=test_transforms
         )
     elif dataset == "svhn":

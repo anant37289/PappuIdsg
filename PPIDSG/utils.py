@@ -87,10 +87,10 @@ def get_dataset(args):
             ]
         )
 
-        train_dataset = datasets.CIFAR100(
+        train_dataset = datasets.CIFAR10(
             data_dir, train=True, download=True, transform=apply_transform
         )
-        test_dataset = datasets.CIFAR100(
+        test_dataset = datasets.CIFAR10(
             data_dir, train=False, download=True, transform=apply_transform
         )
 
