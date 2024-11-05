@@ -14,7 +14,7 @@ def args_parser():
     parser.add_argument("--batch_size", type=int, default=64, help="train batch size")
     parser.add_argument("--num_users", type=int, default=10, help="number of users: K")
     parser.add_argument(
-        "--num_class", type=int, default=100, help="class number of dataset"
+        "--num_class", type=int, default=10, help="class number of dataset"
     )
     parser.add_argument(
         "--num_channel", type=int, default=1, help="channel number of dataset: 3 or 1"
