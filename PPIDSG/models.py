@@ -103,7 +103,7 @@ class VGG16_classifier(nn.Module):
         self.fc1 = nn.Linear(in_features=8192, out_features=4096, bias=True)
         self.tanh = nn.Tanh()
         self.fc2 = nn.Linear(in_features=4096, out_features=1024, bias=True)
-        self.fc3 = nn.Linear(in_features=1024, out_features=10, bias=True)
+        self.fc3 = nn.Linear(in_features=1024, out_features=100, bias=True)
 
     def forward(self, x):
         x = x.view(x.size(0), -1)
