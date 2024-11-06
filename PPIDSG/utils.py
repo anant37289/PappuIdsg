@@ -99,8 +99,8 @@ def get_dataset(args):
             transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
         ])
 
-        train_dataset = datasets.SVHN(data_dir, split='train', download=False, transform=apply_transform)
-        test_dataset = datasets.SVHN(data_dir, split='test', download=False, transform=apply_transform)
+        train_dataset = datasets.SVHN(data_dir, split='train', download=True, transform=apply_transform)
+        test_dataset = datasets.SVHN(data_dir, split='test', download=True, transform=apply_transform)
 
         # sample training data amongst users
         user_groups = dataset_iid(train_dataset, args.num_users)
