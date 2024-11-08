@@ -8,7 +8,120 @@ from PIL import Image
 from torchvision import datasets, transforms
 from torch.autograd import Variable
 from torch.utils.data import Dataset
+import shutil
+from torchvision.datasets import ImageFolder
+import torch.utils.data
+from torchvision import transforms
+import urllib.request
+import zipfile
+import hashlib
 
+class TinyImageNet(ImageFolder):
+    """Dataset for TinyImageNet-200"""
+    base_folder = 'tiny-imagenet-200'
+    url = 'http://cs231n.stanford.edu/tiny-imagenet-200.zip'
+    filename = 'tiny-imagenet-200.zip'
+    md5 = '90528d7ca1a48142e341f4ef8d21d0de'
+
+    def __init__(self, root, split='train', transform=None, download=False):
+        self.root = os.path.expanduser(root)
+        self.split = split
+        self.transform = transform
+        
+        if download:
+            self.download()
+            
+        self.split_folder = os.path.join(root, self.base_folder, split)
+        
+        if not os.path.exists(self.split_folder):
+            raise RuntimeError('Dataset not found. You can use download=True to download it')
+        
+        # If it's validation split, normalize the folder structure
+        if split == 'val':
+            normalize_val_folder(os.path.join(root, self.base_folder, 'val'))
+            
+        super().__init__(self.split_folder, transform=transform)
+
+    def _check_integrity(self):
+        """Check MD5 of downloaded file"""
+        if not os.path.exists(os.path.join(self.root, self.filename)):
+            return False
+        
+        with open(os.path.join(self.root, self.filename), 'rb') as f:
+            md5_downloaded = hashlib.md5(f.read()).hexdigest()
+        
+        return self.md5 == md5_downloaded
+
+    def download(self):
+        """Download and extract the dataset if it doesn't exist"""
+        if os.path.exists(os.path.join(self.root, self.base_folder)):
+            print('Dataset already exists.')
+            return
+
+        os.makedirs(self.root, exist_ok=True)
+
+        if self._check_integrity():
+            print('Files already downloaded and verified')
+        else:
+            print(f'Downloading {self.url} to {os.path.join(self.root, self.filename)}')
+            
+            # Download with progress indicator
+            def report_progress(count, block_size, total_size):
+                percent = int(count * block_size * 100 / total_size)
+                print(f'\rDownloading: {percent}%', end='')
+                
+            try:
+                urllib.request.urlretrieve(
+                    self.url,
+                    os.path.join(self.root, self.filename),
+                    reporthook=report_progress
+                )
+                print('\nDownload completed.')
+            except Exception as e:
+                if os.path.exists(os.path.join(self.root, self.filename)):
+                    os.remove(os.path.join(self.root, self.filename))
+                raise e
+
+        # Extract the archive
+        print(f'Extracting {self.filename}')
+        with zipfile.ZipFile(os.path.join(self.root, self.filename), 'r') as zip_ref:
+            zip_ref.extractall(self.root)
+        
+        # Remove the zip file
+        os.remove(os.path.join(self.root, self.filename))
+        print('Extraction completed.')
+
+def normalize_val_folder(path):
+    """Helper function to organize validation folder"""
+    val_images = os.path.join(path, 'images')
+    val_annotations = os.path.join(path, 'val_annotations.txt')
+    
+    if not os.path.exists(val_images):
+        return
+
+    with open(val_annotations) as f:
+        for line in f:
+            words = line.split('\t')
+            img_file, label = words[0], words[1]
+            
+            # Create label folder if it doesn't exist
+            label_folder = os.path.join(path, label)
+            os.makedirs(label_folder, exist_ok=True)
+            
+            # Move image to label folder
+            try:
+                shutil.move(
+                    os.path.join(val_images, img_file),
+                    os.path.join(label_folder, img_file)
+                )
+            except FileNotFoundError:
+                continue
+
+    # Cleanup
+    if os.path.exists(val_images):
+        shutil.rmtree(val_images)
+    if os.path.exists(val_annotations):
+        os.remove(val_annotations)
 
 class ImageDataset(Dataset):
     def __init__(self, root, transforms_=None, mode="train"):
@@ -73,6 +186,27 @@ def dataset_split(train_dataset, num_users):
 
 
 def get_dataset(args):
+    if args.dataset == "tiny_imagenet":
+        data_dir = "./data/tiny-imagenet-200/"
+        apply_transform = transforms.Compose(
+            [
+                transforms.RandomHorizontalFlip(p=0.5),
+                transforms.RandomRotation(15),
+                transforms.ToTensor(),
+                transforms.Normalize(
+                    (0.4802, 0.4481, 0.3975), (0.2302, 0.2265, 0.2262)
+                ),
+            ]
+        )
+        
+        train_dataset = TinyImageNet(
+            data_dir, split="train", download=True, transform=apply_transform
+        )
+        test_dataset = TinyImageNet(
+            data_dir, split="val", download=True, transform=apply_transform
+        )
+
+        user_groups = dataset_iid(train_dataset, args.num_users)
     if args.dataset == "cifar":
         data_dir = "./data/cifar/"
 
@@ -205,3 +339,4 @@ class ImagePool:
                     return_images.append(image)
         return_images = Variable(torch.cat(return_images, 0))
         return return_images
+

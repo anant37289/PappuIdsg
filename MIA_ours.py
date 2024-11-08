@@ -20,7 +20,7 @@ from PPIDSG.models import (
     AutoEncoder_VGG_mnist,
     VGG16_classifier_mnist,
 )
-from PPIDSG.utils import get_dataset, average_weights
+from PPIDSG.utils import get_dataset, average_weights, TinyImageNet
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataset import TensorDataset
 from torch.utils.data.sampler import SubsetRandomSampler
@@ -153,6 +153,13 @@ def get_data_loader(dataset="mnist", batch=64, shadow_split=0.5, num_workers=0):
     elif dataset == "fmnist":
         test_set = torchvision.datasets.FashionMNIST(
             root="./data/fmnist/",
+            train=False,
+            download=False,
+            transform=test_transforms,
+        )
+    elif dataset == "tiny_imagenet":
+        test_set = TinyImageNet(
+            root="./data/tiny-imagenet-200/",
             train=False,
             download=False,
             transform=test_transforms,
