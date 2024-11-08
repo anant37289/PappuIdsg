@@ -17,6 +17,7 @@ from PPIDSG.models import (
     Discriminator,
     AutoEncoder_VGG,
     VGG16_classifier,
+    VGG16_classifier_tinyimagenet,
     AutoEncoder_VGG_mnist,
     VGG16_classifier_mnist,
 )
@@ -244,10 +245,17 @@ def create_attack(num, dataset, victim, others):
         C = VGG16_classifier_mnist().to(device)
         Fea = AutoEncoder_VGG_mnist().to(device)
         F_O = AutoEncoder_VGG_mnist().to(device)
-    else:
+    elif dataset == "cifar" or dataset == "svhn":
         G = Generator(3, 32, 3, 6).to(device)
         G_O = Generator(3, 32, 3, 6).to(device)
         C = VGG16_classifier().to(device)
+        Fea = AutoEncoder_VGG().to(device)
+        F_O = AutoEncoder_VGG().to(device)
+    elif dataset == "tiny_imagenet":
+        # print("here mu")
+        G = Generator(3, 32, 3, 6).to(device)
+        G_O = Generator(3, 32, 3, 6).to(device)
+        C = VGG16_classifier_tinyimagenet().to(device)
         Fea = AutoEncoder_VGG().to(device)
         F_O = AutoEncoder_VGG().to(device)
 
@@ -371,11 +379,17 @@ if __name__ == "__main__":
         D_B = Discriminator(1, args.ndf, 1)
         global_model = AutoEncoder_VGG_mnist().to(device)
         C = VGG16_classifier_mnist().to(device)
+    elif args.dataset == "tiny_imagenet":
+        G = Generator(3, args.ngf, 3, args.num_resnet)
+        D_B = Discriminator(3, args.ndf, 1)
+        global_model = AutoEncoder_VGG().to(device)
+        C = VGG16_classifier_tinyimagenet().to(device)
     else:
         G = Generator(3, args.ngf, 3, args.num_resnet)
         D_B = Discriminator(3, args.ndf, 1)
         global_model = AutoEncoder_VGG().to(device)
         C = VGG16_classifier().to(device)
+      
 
     G.normal_weight_init(mean=0.0, std=0.02)
     D_B.normal_weight_init(mean=0.0, std=0.02)

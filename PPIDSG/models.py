@@ -94,6 +94,25 @@ class ResnetBlock(nn.Module):
         out = self.resnet_block(x)
         return out
 
+# class VGG16_classifier_tinyimagenet(nn.Module):
+class VGG16_classifier_tinyimagenet(nn.Module):
+  def __init__(self):
+      super().__init__()
+      # self.ReLu = nn.ReLU(inplace=True)
+      self.fc1 = nn.Linear(in_features=32768, out_features=4096, bias=True)
+      self.tanh = nn.Tanh()
+      self.fc2 = nn.Linear(in_features=4096, out_features=1024, bias=True)
+      self.fc3 = nn.Linear(in_features=1024, out_features=200, bias=True)
+
+  def forward(self, x):
+      x = x.view(x.size(0), -1)
+      x = self.fc1(x)
+      x = self.tanh(x)
+      x = self.fc2(x)
+      x = self.tanh(x)
+      x = self.fc3(x)
+      return x
+
 
 class VGG16_classifier(nn.Module):
     def __init__(self):
@@ -103,7 +122,7 @@ class VGG16_classifier(nn.Module):
         self.fc1 = nn.Linear(in_features=8192, out_features=4096, bias=True)
         self.tanh = nn.Tanh()
         self.fc2 = nn.Linear(in_features=4096, out_features=1024, bias=True)
-        self.fc3 = nn.Linear(in_features=1024, out_features=10, bias=True)
+        self.fc3 = nn.Linear(in_features=1024, out_features=200, bias=True)
 
     def forward(self, x):
         x = x.view(x.size(0), -1)
