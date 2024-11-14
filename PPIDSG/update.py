@@ -9,6 +9,7 @@ from src.EtC.EtC_cifar import *
 from src.EtC.EtC_mnist import EtC_mnist
 from PPIDSG.options import args_parser
 from PPIDSG.utils import ImagePool
+import time
 
 
 class DatasetSplit(Dataset):
@@ -192,7 +193,7 @@ def test_inference(G, D_A, C, test_dataset):
     C.to(device)
     loss, total, correct = 0.0, 0.0, 0.0
     testloader = DataLoader(test_dataset, batch_size=64, shuffle=False, num_workers=2)
-
+    start = time.time()
     for batch_idx, (images, labels) in enumerate(testloader):
         real_A = images.to(device)
         labels = labels.to(device)
@@ -207,6 +208,8 @@ def test_inference(G, D_A, C, test_dataset):
         pred_labels = pred_labels.view(-1)
         correct += torch.sum(torch.eq(pred_labels, labels)).item()
         total += len(labels)
-
+    end = time.time()
+    eval_time = (end - start)/total
+    print(eval_time)
     accuracy = correct / total
     return accuracy
